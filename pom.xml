@@ -24,9 +24,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>git@github.com:hanqunfeng/springbootchapter.git</connection>
-        <developerConnection>git@github.com:hanqunfeng/springbootchapter.git</developerConnection>
-        <url>https://github.com/hanqunfeng/springbootchapter</url>
+        <connection>git@github.com:hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</connection>
+        <developerConnection>git@github.com:hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</developerConnection>
+        <url>https://github.com/hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</url>
     </scm>
 
     <properties>
