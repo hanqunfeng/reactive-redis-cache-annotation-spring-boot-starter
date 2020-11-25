@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.hanqf.reactive.redis.cache.config.ReactiveRedisConfig
