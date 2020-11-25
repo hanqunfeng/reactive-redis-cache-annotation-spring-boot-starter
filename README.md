@@ -1,13 +1,10 @@
-# reactive-redis-cache-annotation-spring-boot-starter
-reactive-redis-cache-annotation-spring-boot-starter
-
 # reactive-redis-cache-annotation-spring-boot-starter----响应式Redis方法缓存注解，starter
 ## 说明
 本项目是为webflux项目提供方法缓存的支持，只支持响应式方法，即方法返回类型必须是Mono或者Flux。
 
 ## 使用方法
 ### 加入依赖
-```maven
+```xml
 <dependency>
   <groupId>com.hanqunfeng</groupId>
   <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
@@ -15,13 +12,13 @@ reactive-redis-cache-annotation-spring-boot-starter
 </dependency>
 ```
 
-```gradel
+```groovy
 implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:1.0.0'
 ```
 
 
 ### 其它依赖
-```gradle
+```groovy
     //webflux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     
