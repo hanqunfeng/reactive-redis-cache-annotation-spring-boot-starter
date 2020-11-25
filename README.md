@@ -9,14 +9,14 @@ reactive-redis-cache-annotation-spring-boot-starter
 ### 加入依赖
 ```maven
 <dependency>
-  <groupId>com.hanqf</groupId>
+  <groupId>com.hanqunfeng</groupId>
   <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
   <version>1.0.0</version>
 </dependency>
 ```
 
 ```gradel
-implementation 'com.hanqf:reactive-redis-cache-annotation-spring-boot-starter:1.0.0'
+implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:1.0.0'
 ```
 
 

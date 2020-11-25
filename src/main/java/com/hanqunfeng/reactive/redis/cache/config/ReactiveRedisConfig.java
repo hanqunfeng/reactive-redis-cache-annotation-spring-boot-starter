@@ -1,4 +1,4 @@
-package org.hanqf.reactive.redis.cache.config;
+package com.hanqunfeng.reactive.redis.cache.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -32,7 +32,7 @@ import java.time.format.DateTimeFormatter;
  * Created by hanqf on 2020/11/22 15:38
  */
 @Configuration
-@ComponentScan(basePackages = "org.hanqf.reactive.redis.cache")
+@ComponentScan(basePackages = "com.hanqunfeng.reactive.redis.cache")
 @EnableAspectJAutoProxy
 @Slf4j
 public class ReactiveRedisConfig {
