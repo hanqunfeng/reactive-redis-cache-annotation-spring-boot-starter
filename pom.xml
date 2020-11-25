@@ -26,7 +26,7 @@
     <scm>
         <connection>git@github.com:hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</connection>
         <developerConnection>git@github.com:hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</developerConnection>
-        <url>https://github.com/hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter.git</url>
+        <url>https://github.com/hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter</url>
     </scm>
 
     <properties>
