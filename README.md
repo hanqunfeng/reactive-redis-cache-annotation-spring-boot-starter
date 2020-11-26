@@ -8,12 +8,12 @@
 <dependency>
   <groupId>com.hanqunfeng</groupId>
   <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
 ```groovy
-implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:1.0.0'
+implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:1.0.1'
 ```
 
 
