@@ -25,7 +25,7 @@ implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-start
     //Spring Boot Redis 依赖，或者spring-boot-starter-data-redis-reactive，任选其一即可，注意要在配置文件中加入redis的配置
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     
-    //redis lettuce连接池依赖，也可以使用jredis连接池，非必须，正式环境建议开启连接池
+    //redis lettuce连接池依赖，也可以使用jedis连接池，非必须，正式环境建议开启连接池
     implementation 'org.apache.commons:commons-pool2'
     
     //aop 面向方面编程 支持@Aspect，非必须
