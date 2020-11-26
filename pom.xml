@@ -6,7 +6,7 @@
 
     <groupId>com.hanqunfeng</groupId>
     <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>redis-cache-annotation-reactive</name>
     <description>redis cache function annotation for webflux</description>
     <url>https://blog.hanqunfeng.com</url>

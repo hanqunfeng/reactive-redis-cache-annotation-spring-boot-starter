@@ -17,23 +17,26 @@ implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-start
 ```
 
 
-### 其它依赖
+### 此时项目中可能还要添加其它依赖，以gradle举例
 ```groovy
-    //webflux
+    //webflux，非必须，主要是面向响应式编程的，所以使用springboot大概率会使用webflux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     
-    //Spring Boot Redis 依赖，或者spring-boot-starter-data-redis-reactive
+    //Spring Boot Redis 依赖，或者spring-boot-starter-data-redis-reactive，任选其一即可，注意要在配置文件中加入redis的配置
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
-    //aop 面向方面编程 支持@Aspect
+    
+    //redis lettuce连接池依赖，也可以使用jredis连接池，非必须，正式环境建议开启连接池
+    implementation 'org.apache.commons:commons-pool2'
+    
+    //aop 面向方面编程 支持@Aspect，非必须
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 ```
 
-### 如果使用时没有创建RedisTemplate,项目中提供了一个,基于jackson序列化，支持jdk8的LocalDate和LocalDateTime
+### 如果使用时没有创建RedisTemplate,本项目中提供了一个默认的RedisTemplate,基于jackson序列化，支持jdk8的LocalDate和LocalDateTime
 ```java
     @Bean
     @ConditionalOnMissingBean(value = RedisTemplate.class)
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
 
         log.debug("ReactiveRedisConfig RedisTemplate");
         ObjectMapper objectMapper = new ObjectMapper();
@@ -84,7 +87,21 @@ public class SysUserService{
     @Autowired
     SysUserRepository sysUserRepository;
     
-    //方法缓存，key支持EL表达式
+    /**
+    * 缓存 cacheName和key支持EL表达式，实际key的名称是"cacheName_key"
+    * 缓存结果
+    * key:sysuser_find_lisi
+    * value:
+    * [
+    * "com.example.model.SysUser"
+    * {
+    *    id:"5c74a4e4-c4f2-4570-8735-761d7a570d36"
+    *    username:"lisi"
+    *    password:"$2a$10$PXoGXLwg05.5YO.QtZa46ONypBmiK59yfefvO1OGO8kYFwzOB.Os6"
+    *    enable:true
+    * }
+    * ]
+    */
     @ReactiveRedisCacheable(cacheName = "sysuser", key = "'find_' + #username")
     public Mono<SysUser> findUserByUsername(String username) {
         return sysUserRepository.findByUsername(username);
@@ -95,13 +112,21 @@ public class SysUserService{
         return sysUserRepository.findAll();
     }
 
-    //清除以"sysuser_"开头的全部key
+    /**
+    * 删除缓存，allEntries = true 表示删除全部以"cacheName_"开头的缓存
+    * allEntries 默认false，此时需要指定key的值，表示删除指定的"cacheName_key"
+    */
     @ReactiveRedisCacheEvict(cacheName = "sysuser", allEntries = true)
     public Mono<SysUser> add(SysUser sysUser) {
         return sysUserRepository.addSysUser(sysUser.getId(), sysUser.getUsername(), sysUser.getPassword(), sysUser.getEnable()).flatMap(data -> sysUserRepository.findById(sysUser.getId()));
     }
 
-    //组合
+    /**
+    * 组合注解，用法与@Caching类似
+    * 规则：
+    * 1.cacheables不能与cacheEvicts或者cachePuts同时存在，因为后者一定会执行方法主体，达不到调用缓存的目的，所以当cacheables存在时，后者即便指定也不执行
+    * 2.先执行cacheEvicts，再执行cachePuts
+    */
     @ReactiveRedisCaching(
             evict = {@ReactiveRedisCacheEvict(cacheName = "sysuser", key = "all")},
             put = {@ReactiveRedisCachePut(cacheName = "sysuser", key = "'find_' + #sysUser.username")}
@@ -111,8 +136,10 @@ public class SysUserService{
         return save;
     }
 
-    @ReactiveRedisCacheEvict(cacheName = "sysuser", allEntries = true)
-    @Transactional(rollbackFor = {Throwable.class})
+    /**
+    * 删除指定的"cacheName_key"
+    */
+    @RedisCacheEvict(cacheName = "sysuser", key="'find_' + #username")
     public Mono<Boolean> deleteByUserName(String username) {
         return sysUserRepository.deleteByUsername(username);
     }
