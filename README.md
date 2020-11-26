@@ -57,12 +57,12 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     * }
     * ]
     */
-    @RedisCacheable(cacheName = "sysuser", key = "'find_' + #username")
+    @ReactiveRedisCacheable(cacheName = "sysuser", key = "'find_' + #username")
     public Mono<SysUser> findUserByUsername(String username) {
         return sysUserRepository.findByUsername(username);
     }
 
-    @RedisCacheable(cacheName = "sysuser", key = "all")
+    @ReactiveRedisCacheable(cacheName = "sysuser", key = "all")
     public Flux<SysUser> findAll() {
         return sysUserRepository.findAll();
     }
@@ -71,7 +71,7 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     * 删除缓存，allEntries = true 表示删除全部以"cacheName_"开头的缓存
     * allEntries 默认false，此时需要指定key的值，表示删除指定的"cacheName_key"
     */
-    @RedisCacheEvict(cacheName = "sysuser", allEntries = true)
+    @ReactiveRedisCacheEvict(cacheName = "sysuser", allEntries = true)
     public Mono<SysUser> add(SysUser sysUser) {
         return sysUserRepository.addSysUser(sysUser.getId(), sysUser.getUsername(), sysUser.getPassword(), sysUser.getEnable()).flatMap(data -> sysUserRepository.findById(sysUser.getId()));
     }
@@ -82,9 +82,9 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     * 1.cacheables不能与cacheEvicts或者cachePuts同时存在，因为后者一定会执行方法主体，达不到调用缓存的目的，所以当cacheables存在时，后者即便指定也不执行
     * 2.先执行cacheEvicts，再执行cachePuts
     */
-    @RedisCaching(
-            evict = {@RedisCacheEvict(cacheName = "sysuser", key = "all")},
-            put = {@RedisCachePut(cacheName = "sysuser", key = "'find_' + #sysUser.username")}
+    @ReactiveRedisCaching(
+            evict = {@ReactiveRedisCacheEvict(cacheName = "sysuser", key = "all")},
+            put = {@ReactiveRedisCachePut(cacheName = "sysuser", key = "'find_' + #sysUser.username")}
     )
     public Mono<SysUser> update(SysUser sysUser) {
         Mono<SysUser> save = sysUserRepository.save(sysUser);
@@ -94,7 +94,7 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     /**
     * 删除指定的"cacheName_key"
     */
-    @RedisCacheEvict(cacheName = "sysuser", key="'find_' + #username")
+    @ReactiveRedisCacheEvict(cacheName = "sysuser", key="'find_' + #username")
     public Mono<Boolean> deleteByUserName(String username) {
         return sysUserRepository.deleteByUsername(username);
     }
