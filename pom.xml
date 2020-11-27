@@ -106,7 +106,7 @@
                 <executions>
                     <execution>
                         <id>attach-source</id>
-                        <phase>package</phase>
+                        <phase>verify</phase>
                         <goals>
                             <!--生成源代码的jar -->
                             <goal>jar</goal>
@@ -122,7 +122,7 @@
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
-                        <phase>package</phase>
+                        <phase>verify</phase>
                         <goals>
                             <!--生成javadoc的jar -->
                             <goal>jar</goal>
