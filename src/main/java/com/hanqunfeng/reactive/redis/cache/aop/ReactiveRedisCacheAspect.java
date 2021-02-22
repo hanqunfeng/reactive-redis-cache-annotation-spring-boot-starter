@@ -380,9 +380,9 @@ public class ReactiveRedisCacheAspect {
 
     private void deleteRedisCache(String cacheName, String key, boolean clearAll) {
 
-        String redis_key = "";
+        String redis_key;
         if (clearAll) {
-            redis_key = cacheName + "_*";
+            redis_key = cacheName;
         } else {
             redis_key = cacheName + "_" + key;
         }
