@@ -44,7 +44,7 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
 * 方法返回值必须是Mono或者Flux类型，使用方式与springboot提供的Cacheable等注解类似
 ```java
     /**
-    * 缓存 cacheName和key支持EL表达式，实际key的名称是"cacheName_key"
+    * 缓存 cacheName和key支持EL表达式，实际key的名称是"cacheName:key"
     * 缓存结果
     * key:sysuser_find_lisi
     * value:
@@ -58,21 +58,21 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     * }
     * ]
     */
-    @ReactiveRedisCacheable(cacheName = "sysuser", key = "'find_' + #username")
+    @ReactiveRedisCacheable(cacheName = "sys-user", key = "'find_' + #username")
     public Mono<SysUser> findUserByUsername(String username) {
         return sysUserRepository.findByUsername(username);
     }
 
-    @ReactiveRedisCacheable(cacheName = "sysuser", key = "all")
+    @ReactiveRedisCacheable(cacheName = "sys-user", key = "all")
     public Flux<SysUser> findAll() {
         return sysUserRepository.findAll();
     }
 
     /**
-    * 删除缓存，allEntries = true 表示删除全部以"cacheName_"开头的缓存
-    * allEntries 默认false，此时需要指定key的值，表示删除指定的"cacheName_key"
+    * 删除缓存，allEntries = true 表示删除全部以"cacheName:"开头的缓存
+    * allEntries 默认false，此时需要指定key的值，表示删除指定的"cacheName:key"
     */
-    @ReactiveRedisCacheEvict(cacheName = "sysuser", allEntries = true)
+    @ReactiveRedisCacheEvict(cacheName = "sys-user", allEntries = true)
     public Mono<SysUser> add(SysUser sysUser) {
         return sysUserRepository.addSysUser(sysUser.getId(), sysUser.getUsername(), sysUser.getPassword(), sysUser.getEnable()).flatMap(data -> sysUserRepository.findById(sysUser.getId()));
     }
@@ -84,8 +84,8 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     * 2.先执行cacheEvicts，再执行cachePuts
     */
     @ReactiveRedisCaching(
-            evict = {@ReactiveRedisCacheEvict(cacheName = "sysuser", key = "all")},
-            put = {@ReactiveRedisCachePut(cacheName = "sysuser", key = "'find_' + #sysUser.username")}
+            evict = {@ReactiveRedisCacheEvict(cacheName = "sys-user", key = "all")},
+            put = {@ReactiveRedisCachePut(cacheName = "sys-user", key = "'find_' + #sysUser.username")}
     )
     public Mono<SysUser> update(SysUser sysUser) {
         Mono<SysUser> save = sysUserRepository.save(sysUser);
@@ -93,9 +93,9 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     }
 
     /**
-    * 删除指定的"cacheName_key"
+    * 删除指定的"cacheName:key"
     */
-    @ReactiveRedisCacheEvict(cacheName = "sysuser", key="'find_' + #username")
+    @ReactiveRedisCacheEvict(cacheName = "sys-user", key="'find_' + #username")
     public Mono<Boolean> deleteByUserName(String username) {
         return sysUserRepository.deleteByUsername(username);
     }
