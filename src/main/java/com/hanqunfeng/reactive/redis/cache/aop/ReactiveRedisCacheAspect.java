@@ -69,7 +69,7 @@ public class ReactiveRedisCacheAspect {
         cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
         key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-        String redis_key = cacheName + "_" + key;
+        String redis_key = redisKey(cacheName, key);
 
         boolean hasKey = redisTemplate.hasKey(redis_key);
         if (hasKey) {
@@ -167,7 +167,7 @@ public class ReactiveRedisCacheAspect {
         cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
         key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-        String redis_key = cacheName + "_" + key;
+        String redis_key = redisKey(cacheName, key);
 
         boolean hasKey = redisTemplate.hasKey(redis_key);
         if (hasKey) {
@@ -216,7 +216,7 @@ public class ReactiveRedisCacheAspect {
                 cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
                 key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-                String redis_key = cacheName + "_" + key;
+                String redis_key = redisKey(cacheName, key);
 
                 key_map.put(redis_key, timeout);
                 key_list.add(redis_key);
@@ -278,7 +278,7 @@ public class ReactiveRedisCacheAspect {
                         if (allEntries) {
                             map.put(cacheName, true);
                         } else {
-                            map.put(cacheName + "_" + key, false);
+                            map.put(redisKey(cacheName, key), false);
                         }
                     }
                 });
@@ -299,7 +299,7 @@ public class ReactiveRedisCacheAspect {
                     cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
                     key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-                    String redis_key = cacheName + "_" + key;
+                    String redis_key = redisKey(cacheName, key);
 
                     key_map.put(redis_key, timeout);
 
@@ -342,18 +342,14 @@ public class ReactiveRedisCacheAspect {
                     return ((Flux) proceed).collectList().doOnNext(list -> {
                         //执行方法后清除缓存
                         if (map.size() > 0) {
-                            map.forEach((key, val) -> {
-                                deleteRedisCache(key, val);
-                            });
+                            map.forEach((key, val) -> deleteRedisCache(key, val));
                         }
                     }).flatMapMany(list -> Flux.fromIterable((List) list));
                 } else if (returnTypeName.equals("Mono")) {
                     return ((Mono) proceed).doOnNext(obj -> {
                         //执行方法后清除缓存
                         if (map.size() > 0) {
-                            map.forEach((key, val) -> {
-                                deleteRedisCache(key, val);
-                            });
+                            map.forEach((key, val) -> deleteRedisCache(key, val));
                         }
                     });
                 } else {
@@ -367,7 +363,7 @@ public class ReactiveRedisCacheAspect {
 
     private void deleteRedisCache(String key, boolean clearAll) {
         if (clearAll) {
-            Set keys = redisTemplate.keys(key + "_*");
+            Set keys = redisTemplate.keys(key + ":*");
             if (!keys.isEmpty()) {
                 redisTemplate.delete(keys);
             }
@@ -384,10 +380,14 @@ public class ReactiveRedisCacheAspect {
         if (clearAll) {
             redis_key = cacheName;
         } else {
-            redis_key = cacheName + "_" + key;
+            redis_key = redisKey(cacheName, key);
         }
 
         deleteRedisCache(redis_key, clearAll);
+    }
+
+    private String redisKey(String cacheName, String key){
+        return cacheName + ":" + key;
     }
 
 }

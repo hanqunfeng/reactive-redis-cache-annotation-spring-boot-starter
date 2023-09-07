@@ -1,7 +1,7 @@
 # reactive-redis-cache-annotation-spring-boot-starter----响应式Redis方法缓存注解，starter
 ## 摘要
 * 通过本文，你将知道如何在WebFlux项目中通过redis注解缓存方法的返回值
-* 本项目基于springboot:2.4.0，jdk1.8，并使用Maven构建
+* 本项目最新的2.0.0版本是基于springboot:2.17.15，jdk1.8，并使用Maven构建，可以在springboot2.17+(包含3.x+)的项目中使用。
 * 代码地址:[https://github.com/hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter](https://github.com/hanqunfeng/reactive-redis-cache-annotation-spring-boot-starter)
 
 <!--more-->
@@ -10,19 +10,20 @@
 
 ## 使用示例
 * 本项目已经发布到maven中央仓库，直接在项目中添加依赖即可。
-* 本项目虽然基于springboot:2.4.0构建，但实际上springboot2.0+都可以使用。
+* 1.1.0及以下版本是基于springboot:2.4.0构建，可以在springboot2.0+的项目中使用。
+* 2.x.x及以上版本是基于springboot:2.17.15构建，可以在springboot2.17+(包含3.x+)的项目中使用。
 * maven依赖
 ```xml
 <dependency>
   <groupId>com.hanqunfeng</groupId>
   <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-  <version>1.0.1</version>
+  <version>2.0.0</version>
 </dependency>
 ```
 
 * gradle依赖
 ```groovy
-implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:1.0.1'
+implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:2.0.0'
 ```
 
 * 此时项目中可能还要添加其它依赖，以gradle举例
@@ -149,6 +150,8 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     }
 
 ```
+
+### [Github示例代码](https://github.com/hanqunfeng/springbootchapter/tree/master/springboot3-demo/web-flux-mysql-redis-demo)
 
 
 

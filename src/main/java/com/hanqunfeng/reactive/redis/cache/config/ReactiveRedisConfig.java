@@ -1,4 +1,5 @@
 package com.hanqunfeng.reactive.redis.cache.config;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -11,10 +12,10 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,7 +31,7 @@ import java.time.format.DateTimeFormatter;
  * @author hanqf
  * Created by hanqf on 2020/11/22 15:38
  */
-@Configuration
+@AutoConfiguration
 @ComponentScan(basePackages = "com.hanqunfeng.reactive.redis.cache")
 @EnableAspectJAutoProxy
 @Slf4j
