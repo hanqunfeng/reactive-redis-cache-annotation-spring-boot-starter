@@ -12,13 +12,13 @@ import java.lang.annotation.*;
 @Documented
 public @interface ReactiveRedisCacheable {
     /**
-     * 缓存key，key为cacheName+"_"+key
+     * 缓存key，key为cacheName+":"+key
      * 支持EL表达式
     */
     String key();
 
     /**
-     * 缓存key分组，会做为缓存key的前缀+"_"
+     * 缓存key分组，会做为缓存key的前缀+":"
      * 支持EL表达式
     */
     String cacheName();

@@ -17,7 +17,7 @@
 <dependency>
   <groupId>com.hanqunfeng</groupId>
   <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-  <version>2.0.0</version>
+  <version>{latest-version}</version>
 </dependency>
 ```
 

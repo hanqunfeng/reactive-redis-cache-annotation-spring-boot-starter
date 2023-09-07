@@ -12,13 +12,13 @@ import java.lang.annotation.*;
 @Documented
 public @interface ReactiveRedisCacheEvict {
     /**
-     * 缓存key，如果cacheName不为空，则key为cacheName+"_"+key
+     * 缓存key，如果cacheName不为空，则key为cacheName+":"+key
      * 支持EL表达式
      */
     String key() default "";
 
     /**
-     * 缓存key分组，会做为缓存key的前缀+"_"
+     * 缓存key分组，会做为缓存key的前缀+":"
      * 支持EL表达式
      */
     String cacheName();
