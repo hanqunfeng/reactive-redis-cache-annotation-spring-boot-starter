@@ -23,7 +23,7 @@
 
 * gradle依赖
 ```groovy
-implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:2.0.0'
+implementation 'com.hanqunfeng:reactive-redis-cache-annotation-spring-boot-starter:{latest-version}'
 ```
 
 * 此时项目中可能还要添加其它依赖，以gradle举例
