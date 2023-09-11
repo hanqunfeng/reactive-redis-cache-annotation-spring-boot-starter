@@ -74,6 +74,8 @@ public class ReactiveRedisCacheAspect {
         boolean hasKey = redisTemplate.hasKey(redis_key);
         if (hasKey) {
             Object o = redisTemplate.opsForValue().get(redis_key);
+            log.debug("The key[{}] exists,method body not executed", redis_key);
+
             if (returnTypeName.equals("Flux")) {
                 return Flux.fromIterable((List) o);
             } else if (returnTypeName.equals("Mono")) {
@@ -82,12 +84,19 @@ public class ReactiveRedisCacheAspect {
                 return o;
             }
         } else {
+            log.debug("The key[{}] does not exist,method body executed", redis_key);
             //实际执行的方法
             Object proceed = proceedingJoinPoint.proceed();
             if (returnTypeName.equals("Flux")) {
-                return ((Flux) proceed).collectList().doOnNext(list -> redisTemplate.opsForValue().set(redis_key, list, timeout, TimeUnit.SECONDS)).flatMapMany(list -> Flux.fromIterable((List) list));
+                return ((Flux) proceed).collectList().doOnNext(list -> {
+                    redisTemplate.opsForValue().set(redis_key, list, timeout, TimeUnit.SECONDS);
+                    log.debug("The key[{}] has been cached", redis_key);
+                }).flatMapMany(list -> Flux.fromIterable((List) list));
             } else if (returnTypeName.equals("Mono")) {
-                return ((Mono) proceed).doOnNext(obj -> redisTemplate.opsForValue().set(redis_key, obj, timeout, TimeUnit.SECONDS));
+                return ((Mono) proceed).doOnNext(obj -> {
+                    redisTemplate.opsForValue().set(redis_key, obj, timeout, TimeUnit.SECONDS);
+                    log.debug("The key[{}] has been cached", redis_key);
+                });
             } else {
                 return proceed;
             }
@@ -122,13 +131,14 @@ public class ReactiveRedisCacheAspect {
             deleteRedisCache(cacheName, key, allEntries);
 
             //实际执行的方法
+            log.debug("beforeInvocation=[{}],Method body executed", beforeInvocation);
             Object proceed = proceedingJoinPoint.proceed();
             return proceed;
         } else {//成功执行方法后清除缓存
 
             //实际执行的方法
             Object proceed = proceedingJoinPoint.proceed();
-
+            log.debug("beforeInvocation=[{}],Method body executed", beforeInvocation);
             final String cacheNameTemp = cacheName;
             final String keyTemp = key;
 
@@ -171,15 +181,23 @@ public class ReactiveRedisCacheAspect {
 
         boolean hasKey = redisTemplate.hasKey(redis_key);
         if (hasKey) {
-            redisTemplate.delete(redis_key);
+            deleteRedisCache(redis_key, false);
         }
 
         //实际执行的方法
         Object proceed = proceedingJoinPoint.proceed();
+        log.debug("Method body executed");
         if (returnTypeName.equals("Flux")) {
-            return ((Flux) proceed).collectList().doOnNext(list -> redisTemplate.opsForValue().set(redis_key, list, timeout, TimeUnit.SECONDS)).flatMapMany(list -> Flux.fromIterable((List) list));
+            return ((Flux) proceed).collectList().doOnNext(list -> {
+                        redisTemplate.opsForValue().set(redis_key, list, timeout, TimeUnit.SECONDS);
+                        log.debug("The key[{}] has been cached", redis_key);
+                    })
+                    .flatMapMany(list -> Flux.fromIterable((List) list));
         } else if (returnTypeName.equals("Mono")) {
-            return ((Mono) proceed).doOnNext(obj -> redisTemplate.opsForValue().set(redis_key, obj, timeout, TimeUnit.SECONDS));
+            return ((Mono) proceed).doOnNext(obj -> {
+                redisTemplate.opsForValue().set(redis_key, obj, timeout, TimeUnit.SECONDS);
+                log.debug("The key[{}] has been cached", redis_key);
+            });
         } else {
             return proceed;
         }
@@ -232,6 +250,7 @@ public class ReactiveRedisCacheAspect {
             //全部key都有值，则直接返回缓存
             if (isAllKeyHas.get()) {
                 Object o = redisTemplate.opsForValue().get(key_list.get(0));
+                log.debug("The key[{}] exists,method body not executed", key_list.get(0));
                 if (returnTypeName.equals("Flux")) {
                     return Flux.fromIterable((List) o);
                 } else if (returnTypeName.equals("Mono")) {
@@ -242,14 +261,21 @@ public class ReactiveRedisCacheAspect {
             } else {
                 //实际执行的方法
                 Object proceed = proceedingJoinPoint.proceed();
+                log.debug("The key[{}] does not exist,method body executed", key_list.get(0));
 
                 if (returnTypeName.equals("Flux")) {
                     return ((Flux) proceed).collectList()
-                            .doOnNext(list -> key_map.forEach((key, val) -> redisTemplate.opsForValue().set(key, list, val, TimeUnit.SECONDS)))
+                            .doOnNext(list -> key_map.forEach((key, val) -> {
+                                redisTemplate.opsForValue().set(key, list, val, TimeUnit.SECONDS);
+                                log.debug("The key[{}] has been cached", key);
+                            }))
                             .flatMapMany(list -> Flux.fromIterable((List) list));
                 } else if (returnTypeName.equals("Mono")) {
                     return ((Mono) proceed)
-                            .doOnNext(obj -> key_map.forEach((key, val) -> redisTemplate.opsForValue().set(key, obj, val, TimeUnit.SECONDS)));
+                            .doOnNext(obj -> key_map.forEach((key, val) -> {
+                                redisTemplate.opsForValue().set(key, obj, val, TimeUnit.SECONDS);
+                                log.debug("The key[{}] has been cached", key);
+                            }));
                 } else {
                     return proceed;
                 }
@@ -286,7 +312,7 @@ public class ReactiveRedisCacheAspect {
 
             //实际执行的方法
             Object proceed = proceedingJoinPoint.proceed();
-
+            log.debug("Method body executed");
 
             if (cachePuts.length > 0) {
                 Map<String, Long> key_map = new HashMap<>();
@@ -305,7 +331,7 @@ public class ReactiveRedisCacheAspect {
 
                     boolean hasKey = redisTemplate.hasKey(redis_key);
                     if (hasKey) {
-                        redisTemplate.delete(redis_key);
+                        deleteRedisCache(redis_key, false);
                     }
 
                 });
@@ -319,7 +345,10 @@ public class ReactiveRedisCacheAspect {
                                         deleteRedisCache(key, val);
                                     });
                                 }
-                                key_map.forEach((key, val) -> redisTemplate.opsForValue().set(key, list, val, TimeUnit.SECONDS));
+                                key_map.forEach((key, val) -> {
+                                    redisTemplate.opsForValue().set(key, list, val, TimeUnit.SECONDS);
+                                    log.debug("The key[{}] has been cached", key);
+                                });
                             })
                             .flatMapMany(list -> Flux.fromIterable((List) list));
                 } else if (returnTypeName.equals("Mono")) {
@@ -327,11 +356,12 @@ public class ReactiveRedisCacheAspect {
                             .doOnNext(obj -> {
                                 //执行方法后清除缓存
                                 if (map.size() > 0) {
-                                    map.forEach((key, val) -> {
-                                        deleteRedisCache(key, val);
-                                    });
+                                    map.forEach((key, val) -> deleteRedisCache(key, val));
                                 }
-                                key_map.forEach((key, val) -> redisTemplate.opsForValue().set(key, obj, val, TimeUnit.SECONDS));
+                                key_map.forEach((key, val) -> {
+                                    redisTemplate.opsForValue().set(key, obj, val, TimeUnit.SECONDS);
+                                    log.debug("The key[{}] has been cached", key);
+                                });
                             });
                 } else {
                     return proceed;
@@ -365,11 +395,17 @@ public class ReactiveRedisCacheAspect {
         if (clearAll) {
             Set keys = redisTemplate.keys(key + ":*");
             if (!keys.isEmpty()) {
+                log.debug("The key[{}:*] has been cleared", key);
                 redisTemplate.delete(keys);
+            } else {
+                log.debug("The key[{}:*] does not exist", key);
             }
         } else {
             if (redisTemplate.hasKey(key)) {
+                log.debug("The key[{}] has been cleared", key);
                 redisTemplate.delete(key);
+            } else {
+                log.debug("The key[{}] does not exist", key);
             }
         }
     }
@@ -386,7 +422,7 @@ public class ReactiveRedisCacheAspect {
         deleteRedisCache(redis_key, clearAll);
     }
 
-    private String redisKey(String cacheName, String key){
+    private String redisKey(String cacheName, String key) {
         return cacheName + ":" + key;
     }
 
