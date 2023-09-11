@@ -46,7 +46,7 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     /**
     * 缓存 cacheName和key支持EL表达式，实际key的名称是"cacheName:key"
     * 缓存结果
-    * key:sysuser_find_lisi
+    * key:sys-user_find_lisi
     * value:
     * [
     * "com.example.model.SysUser"
