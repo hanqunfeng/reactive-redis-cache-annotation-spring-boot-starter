@@ -6,11 +6,14 @@
 
     <groupId>com.hanqunfeng</groupId>
     <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-    <version>2.0.2</version>
-<!--     <version>2.0.1-SNAPSHOT</version> -->
+    <version>2.0.4</version>
+<!--     <version>2.0.4-SNAPSHOT</version> -->
 
     <name>redis-cache-annotation-reactive</name>
-    <description>redis cache function annotation for webflux</description>
+    <description>
+        Redis cache function annotation for reactive.
+        User Manual -- https://blog.hanqunfeng.com/2020/11/22/springboot-webflux-redis-annotation
+    </description>
     <url>https://blog.hanqunfeng.com</url>
     <licenses>
         <license>
