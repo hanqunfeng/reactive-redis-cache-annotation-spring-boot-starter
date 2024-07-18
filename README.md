@@ -152,8 +152,9 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
 
 ```
 
-### [Github示例代码](https://github.com/hanqunfeng/springbootchapter/tree/master/springboot3-demo/web-flux-mysql-redis-demo)
-
+### 实例代码：
+* [接近实战的WebFlux+MySQL+Redis实战](https://github.com/hanqunfeng/springbootchapter/tree/master/springboot3-demo/web-flux-mysql-redis-demo)
+* [极简示例](https://github.com/hanqunfeng/springbootchapter/tree/master/springboot3-demo/reactive-redis-cache-annotation-demo)
 ### 开启debug日志
 ```yaml
 logging:
