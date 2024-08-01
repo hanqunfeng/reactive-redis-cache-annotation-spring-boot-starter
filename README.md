@@ -104,51 +104,48 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
 ```
 
 ### RedisTemplate
-* 如果使用时没有创建RedisTemplate，本项目中提供了一个默认的RedisTemplate，基于jackson序列化，支持jdk8的LocalDate和LocalDateTime
+* 如果使用时没有创建RedisTemplate，本项目中提供了一个默认的RedisTemplate<String, Object>，基于jackson序列化，支持jdk8的LocalDate和LocalDateTime
+* 同时默认提供了一个ReactiveRedisTemplate<String, Object>，基于jackson序列化，支持jdk8的LocalDate和LocalDateTime
+* 具体请参考源码`com.hanqunfeng.reactive.redis.cache.config.ReactiveRedisConfig`
 ```java
-    @Bean
-    @ConditionalOnMissingBean(value = RedisTemplate.class)
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+@Bean
+@ConditionalOnMissingBean(value = ReactiveRedisTemplate.class)
+public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory redisConnectionFactory) {
+    log.debug("开启 ReactiveRedisTemplate<String, Object>");
+    StringRedisSerializer stringSerializer = new StringRedisSerializer();
+    Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
+    jackson2JsonRedisSerializer.setObjectMapper(jsonMapper());
 
-        log.debug("ReactiveRedisConfig RedisTemplate");
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        //objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY);
+    RedisSerializationContext<String, Object> context = RedisSerializationContext.<String, Object>newSerializationContext()
+            .key(stringSerializer)
+            .value(jackson2JsonRedisSerializer)
+            .hashKey(stringSerializer)
+            .hashValue(jackson2JsonRedisSerializer)
+            .build();
 
-        //LocalDateTime系列序列化和反序列化模块，继承自jsr310，我们在这里修改了日期格式
-        JavaTimeModule javaTimeModule = new JavaTimeModule();
-        //序列化
-        javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(
-                DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)));
-        javaTimeModule.addSerializer(LocalDate.class,
-                new LocalDateSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)));
-        javaTimeModule.addSerializer(LocalTime.class,
-                new LocalTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
-        //反序列化
-        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(
-                DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)));
-        javaTimeModule.addDeserializer(LocalDate.class,
-                new LocalDateDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)));
-        javaTimeModule.addDeserializer(LocalTime.class,
-                new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
+    return new ReactiveRedisTemplate<>(redisConnectionFactory, context);
+}
 
-        //注册模块
-        objectMapper.registerModule(javaTimeModule);
+@Bean
+@ConditionalOnMissingBean(value = RedisTemplate.class)
+public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
 
-        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
-        serializer.setObjectMapper(objectMapper);
+    log.debug("开启 RedisTemplate<String, Object>");
 
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(serializer);
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(serializer);
-        redisTemplate.afterPropertiesSet();
+    StringRedisSerializer stringSerializer = new StringRedisSerializer();
+    Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
+    jackson2JsonRedisSerializer.setObjectMapper(jsonMapper());
 
-        return redisTemplate;
-    }
+    RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+    redisTemplate.setConnectionFactory(redisConnectionFactory);
+    redisTemplate.setKeySerializer(stringSerializer);
+    redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+    redisTemplate.setHashKeySerializer(stringSerializer);
+    redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
+    redisTemplate.afterPropertiesSet();
+
+    return redisTemplate;
+}
 
 ```
 
