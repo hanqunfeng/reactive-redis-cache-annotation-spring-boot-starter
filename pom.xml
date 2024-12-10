@@ -6,7 +6,7 @@
 
     <groupId>com.hanqunfeng</groupId>
     <artifactId>reactive-redis-cache-annotation-spring-boot-starter</artifactId>
-    <version>2.0.6</version>
+    <version>2.0.8</version>
 <!--     <version>2.0.4-SNAPSHOT</version> -->
 
     <name>redis-cache-annotation-reactive</name>

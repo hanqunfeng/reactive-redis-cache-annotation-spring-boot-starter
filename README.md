@@ -8,6 +8,16 @@
 ## 前言
 最近在使用WebFlux时发现，SpringBoot提供的@Cacheable，@CachePut，@CacheEvict和@Caching注解不支持响应式方法，SpringBoot官方也没有提供响应式方法的缓存注解，看到网上的一些解决方案都是直接在方法代码中加入缓存数据的代码逻辑，这样虽然可以解决问题，但是代码侵入并不优雅，于是萌生自己写一个基于redis的响应式方法缓存注解的想法，本项目参考SpringBoot提供的@Cacheable，@CachePut，@CacheEvict和@Caching注解声明，但是只是实现了一些基本功能，可以满足绝大部分使用场景的要求，因为SpringBoot早晚会给出官方解决方案，在此之前，不妨一试。
 
+
+## 更新日志
+### 版本号：2.0.8 发布时间：2024-12-10
+* `ReactiveRedisCacheable` 注解与 `ReactiveRedisCachePut` 中新增或修改了如下参数的支持
+  - timeout: 缓存过期时间，单位秒，默认24小时，0或负数表示不过期，主要是为了解决`缓存雪崩`的问题
+  - cacheNull: 是否缓存空值，默认 true，此时可以缓存Mono中为null和Flux中为empty的值，主要是为了解决`缓存穿透`的问题
+  - cacheNullTimeout: 缓存空值的过期时间，单位秒，默认600秒，0或负数时使用 timeout 的设置时间
+* 使用`synchronized`锁避免`缓存击穿`的发生，没有使用分布式锁是因为在注解式缓存的应用场景上感觉没啥必要
+  
+
 ## 使用示例
 * 本项目已经发布到maven中央仓库，直接在项目中添加依赖即可。
 * 1.1.0及以下版本是基于springboot:2.4.0构建，可以在springboot2.0+的项目中使用。
@@ -65,8 +75,8 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     }
 
     /**
-     * 2.0.6 版本新增了cacheNull参数，是否缓存空值，默认 true，此时可以缓存Mono中为null和Flux中为empty的值
-     * 2.0.6 版本新增了cacheNullTimeout参数，缓存空值的过期时间，单位秒，默认600秒，0或负数时使用 timeout 的设置时间
+     * 2.0.8 版本新增了cacheNull参数，是否缓存空值，默认 true，此时可以缓存Mono中为null和Flux中为empty的值
+     * 2.0.8 版本新增了cacheNullTimeout参数，缓存空值的过期时间，单位秒，默认600秒，0或负数时使用 timeout 的设置时间
      */
     @ReactiveRedisCacheable(cacheName = "sys-user", key = "'find_' + #username", cacheNull = true, cacheNullTimeout = 300)
     public Mono<SysUser> findUserByUsername(String username) {
@@ -74,7 +84,7 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
     }
 
     /**
-     * 2.0.6 版本新增了timeout参数，缓存过期时间，单位秒，默认24小时，0或负数表示不过期
+     * 2.0.8 版本新增了timeout参数，缓存过期时间，单位秒，默认24小时，0或负数表示不过期
      */
     @ReactiveRedisCacheable(cacheName = "sys-user", key = "all", timeout = -1)
     public Flux<SysUser> findAll() {
