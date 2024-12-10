@@ -24,7 +24,21 @@ public @interface ReactiveRedisCacheable {
     String cacheName();
 
     /**
-     * 缓存过期时间，单位秒，默认24小时
+     * 缓存过期时间，单位秒，默认24小时，0或负数表示不过期
+     *
     */
     long timeout() default 24 * 3600L;
+
+    /**
+     * 是否缓存空值，默认 true
+     * Mono判断是否为Null
+     * Flux判断是否为Empty
+    */
+    boolean cacheNull() default true;
+
+    /**
+     * 缓存空值过期时间，单位秒，默认10分钟，0或负数时使用 timeout 的设置时间
+     *
+    */
+    long cacheNullTimeout() default 600L;
 }

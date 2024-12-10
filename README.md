@@ -64,10 +64,23 @@ implementation 'org.springframework.boot:spring-boot-starter-aop'
         return sysUserRepository.findByUsername(username);
     }
 
-    @ReactiveRedisCacheable(cacheName = "sys-user", key = "all")
+    /**
+     * 2.0.6 版本新增了cacheNull参数，是否缓存空值，默认 true，此时可以缓存Mono中为null和Flux中为empty的值
+     * 2.0.6 版本新增了cacheNullTimeout参数，缓存空值的过期时间，单位秒，默认600秒，0或负数时使用 timeout 的设置时间
+     */
+    @ReactiveRedisCacheable(cacheName = "sys-user", key = "'find_' + #username", cacheNull = true, cacheNullTimeout = 300)
+    public Mono<SysUser> findUserByUsername(String username) {
+        return sysUserRepository.findByUsername(username);
+    }
+
+    /**
+     * 2.0.6 版本新增了timeout参数，缓存过期时间，单位秒，默认24小时，0或负数表示不过期
+     */
+    @ReactiveRedisCacheable(cacheName = "sys-user", key = "all", timeout = -1)
     public Flux<SysUser> findAll() {
         return sysUserRepository.findAll();
     }
+    
 
     /**
     * 删除缓存，allEntries = true 表示删除全部以"cacheName:"开头的缓存
