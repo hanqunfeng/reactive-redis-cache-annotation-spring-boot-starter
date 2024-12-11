@@ -22,7 +22,7 @@ public @interface ReactiveRedisCachePut {
      * 缓存key分组，会做为缓存key的前缀+":"
      * 支持EL表达式
      */
-    String cacheName();
+    String cacheName() default "";
 
     /**
      * 缓存过期时间，单位秒，默认24小时，0或负数表示不过期

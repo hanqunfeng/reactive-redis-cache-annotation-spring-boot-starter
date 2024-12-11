@@ -1,6 +1,7 @@
 package com.hanqunfeng.reactive.redis.cache.aop;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -9,6 +10,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -189,17 +191,20 @@ public class ReactiveRedisCacheAspect {
         String key = annotation.key();
         boolean allEntries = annotation.allEntries();
         boolean beforeInvocation = annotation.beforeInvocation();
+        String[] keys = annotation.keys();
 
         //转换EL表达式
         cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
         key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
-
+        getKeys(keys, proceedingJoinPoint);
 
         //执行方法前清除缓存
         if (beforeInvocation) {
-
-            //清除全部缓存
-            deleteRedisCache(cacheName, key, allEntries);
+            if (keys.length > 0) {
+                deleteRedisCache(cacheName, keys);
+            } else {
+                deleteRedisCache(cacheName, key, allEntries);
+            }
 
             //实际执行的方法
             log.debug("beforeInvocation=[{}],Method body executed", beforeInvocation);
@@ -216,12 +221,20 @@ public class ReactiveRedisCacheAspect {
             if (returnTypeName.equals("Flux")) {
                 return ((Flux) proceed).collectList().doOnSuccess(list -> {
                     //清除全部缓存
-                    deleteRedisCache(cacheNameTemp, keyTemp, allEntries);
+                    if (keys != null && keys.length > 0) {
+                        deleteRedisCache(cacheNameTemp, keys);
+                    } else {
+                        deleteRedisCache(cacheNameTemp, keyTemp, allEntries);
+                    }
                 }).flatMapMany(list -> Flux.fromIterable((List) list));
             } else if (returnTypeName.equals("Mono")) {
                 return ((Mono) proceed).doOnSuccess(obj -> {
                     //清除全部缓存
-                    deleteRedisCache(cacheNameTemp, keyTemp, allEntries);
+                    if (keys != null && keys.length > 0) {
+                        deleteRedisCache(cacheNameTemp, keys);
+                    } else {
+                        deleteRedisCache(cacheNameTemp, keyTemp, allEntries);
+                    }
                 });
             } else {
                 return proceed;
@@ -291,25 +304,25 @@ public class ReactiveRedisCacheAspect {
             cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
             key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-            String redis_key = redisKey(cacheName, key);
+            String redisKey = redisKey(cacheName, key);
 
-            key_map.put(redis_key, timeout);
-            key_cache_null_map.put(redis_key, cacheNull);
-            key_cache_null_timeout_map.put(redis_key, cacheNullTimeout);
-            key_list.add(redis_key);
+            key_map.put(redisKey, timeout);
+            key_cache_null_map.put(redisKey, cacheNull);
+            key_cache_null_timeout_map.put(redisKey, cacheNullTimeout);
+            key_list.add(redisKey);
         });
 
 
         //全部key都有值，则直接返回缓存
-        String redis_key = key_list.get(0);
+        String redisKey = key_list.get(0);
         if (isAllKeyHas(key_list)) {
-            return getObjectByKey(returnTypeName, redis_key);
+            return getObjectByKey(returnTypeName, redisKey);
         } else {
             // 加锁：防止缓存击穿
-            String redis_key_all = redis_key + "_all";
+            String redis_key_all = redisKey + "_all";
             synchronized (redis_key_all.intern()) {
                 if (isAllKeyHas(key_list)) {
-                    return getObjectByKey(returnTypeName, redis_key);
+                    return getObjectByKey(returnTypeName, redisKey);
                 }
                 //实际执行的方法
                 Object proceed = proceedingJoinPoint.proceed();
@@ -332,32 +345,42 @@ public class ReactiveRedisCacheAspect {
     /**
      * 缓存清除
      */
-    private void cacheEvicts(ReactiveRedisCacheEvict[] cacheEvicts, Map<String, Boolean> map, ProceedingJoinPoint proceedingJoinPoint) {
+    private void cacheEvicts(ReactiveRedisCacheEvict[] cacheEvicts, Map<String, Boolean> map, ProceedingJoinPoint proceedingJoinPoint, List<Pair<String, String[]>> list) {
         Arrays.stream(cacheEvicts).forEach(cacheEvict -> {
             String cacheName = cacheEvict.cacheName();
             String key = cacheEvict.key();
             boolean allEntries = cacheEvict.allEntries();
             boolean beforeInvocation = cacheEvict.beforeInvocation();
+            String[] keys = cacheEvict.keys();
 
             //转换EL表达式
             cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
             key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
+            getKeys(keys, proceedingJoinPoint);
 
             if (beforeInvocation) { //执行方法前清除缓存
                 //清除全部缓存
-                deleteRedisCache(cacheName, key, allEntries);
-            } else { //成功执行方法后清除缓存，先保存到map中
-                //清除全部缓存
-                if (allEntries) {
-                    map.put(cacheName, true);
+                if (keys.length > 0) {
+                    deleteRedisCache(cacheName, keys);
                 } else {
-                    map.put(redisKey(cacheName, key), false);
+                    deleteRedisCache(cacheName, key, allEntries);
+                }
+            } else { //成功执行方法后清除缓存，先保存到map中
+                if (keys.length > 0) {
+                    list.add(Pair.of(cacheName, keys));
+                } else {
+                    //清除全部缓存
+                    if (allEntries) {
+                        map.put(cacheName, true);
+                    } else {
+                        map.put(redisKey(cacheName, key), false);
+                    }
                 }
             }
         });
     }
 
-    private Object cachePuts(ReactiveRedisCachePut[] cachePuts, String returnTypeName, Object proceed, Map<String, Boolean> map, ProceedingJoinPoint proceedingJoinPoint) {
+    private Object cachePuts(ReactiveRedisCachePut[] cachePuts, String returnTypeName, Object proceed, Map<String, Boolean> map, ProceedingJoinPoint proceedingJoinPoint, List<Pair<String, String[]>> listKeys) {
         Map<String, Long> key_map = new HashMap<>();
         Map<String, Boolean> key_cache_null_map = new HashMap<>();
         Map<String, Long> key_cache_null_timeout_map = new HashMap<>();
@@ -372,25 +395,30 @@ public class ReactiveRedisCacheAspect {
             cacheName = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, cacheName);
             key = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, key);
 
-            String redis_key = redisKey(cacheName, key);
+            String redisKey = redisKey(cacheName, key);
 
-            key_map.put(redis_key, timeout);
-            key_cache_null_map.put(redis_key, cacheNull);
-            key_cache_null_timeout_map.put(redis_key, cacheNullTimeout);
+            key_map.put(redisKey, timeout);
+            key_cache_null_map.put(redisKey, cacheNull);
+            key_cache_null_timeout_map.put(redisKey, cacheNullTimeout);
 
-            boolean hasKey = redisTemplate.hasKey(redis_key);
+            boolean hasKey = redisTemplate.hasKey(redisKey);
             if (hasKey) {
-                deleteRedisCache(redis_key, false);
+                deleteRedisCache(redisKey, false);
             }
-
         });
 
         if (returnTypeName.equals("Flux")) {
             return ((Flux) proceed).collectList()
                     .doOnSuccess(list -> {
                         //执行方法后清除缓存
-                        if (map.size() > 0) {
-                            map.forEach((key, val) -> deleteRedisCache(key, val));
+                        if (listKeys.size() > 0) {
+                            for (Pair<String, String[]> pair : listKeys) {
+                                deleteRedisCache(pair.getLeft(), pair.getRight());
+                            }
+                        } else {
+                            if (map.size() > 0) {
+                                map.forEach((key, val) -> deleteRedisCache(key, val));
+                            }
                         }
                         key_map.forEach((key, val) -> cacheFlux((List) list, key, val, key_cache_null_map.get(key), key_cache_null_timeout_map.get(key)));
                     })
@@ -399,8 +427,14 @@ public class ReactiveRedisCacheAspect {
             return ((Mono) proceed)
                     .doOnSuccess(obj -> {
                         //执行方法后清除缓存
-                        if (map.size() > 0) {
-                            map.forEach((key, val) -> deleteRedisCache(key, val));
+                        if (listKeys.size() > 0) {
+                            for (Pair<String, String[]> pair : listKeys) {
+                                deleteRedisCache(pair.getLeft(), pair.getRight());
+                            }
+                        } else {
+                            if (map.size() > 0) {
+                                map.forEach((key, val) -> deleteRedisCache(key, val));
+                            }
                         }
                         key_map.forEach((key, val) -> cacheMono(obj, key, val, key_cache_null_map.get(key), key_cache_null_timeout_map.get(key)));
                     });
@@ -431,8 +465,9 @@ public class ReactiveRedisCacheAspect {
             return cacheables(cacheables, returnTypeName, proceedingJoinPoint);
         } else {
             Map<String, Boolean> map = new HashMap<>();
+            List<Pair<String, String[]>> listKeys = new ArrayList<>();
             if (cacheEvicts.length > 0) {
-                cacheEvicts(cacheEvicts, map, proceedingJoinPoint);
+                cacheEvicts(cacheEvicts, map, proceedingJoinPoint, listKeys);
             }
 
             //实际执行的方法
@@ -440,20 +475,32 @@ public class ReactiveRedisCacheAspect {
             log.debug("Method body executed");
 
             if (cachePuts.length > 0) {
-                return cachePuts(cachePuts, returnTypeName, proceed, map, proceedingJoinPoint);
+                return cachePuts(cachePuts, returnTypeName, proceed, map, proceedingJoinPoint, listKeys);
             } else {
                 if (returnTypeName.equals("Flux")) {
                     return ((Flux) proceed).collectList().doOnSuccess(list -> {
                         //执行方法后清除缓存
-                        if (map.size() > 0) {
-                            map.forEach((key, val) -> deleteRedisCache(key, val));
+                        if (listKeys.size() > 0) {
+                            for (Pair<String, String[]> pair : listKeys) {
+                                deleteRedisCache(pair.getLeft(), pair.getRight());
+                            }
+                        } else {
+                            if (map.size() > 0) {
+                                map.forEach((key, val) -> deleteRedisCache(key, val));
+                            }
                         }
                     }).flatMapMany(list -> Flux.fromIterable((List) list));
                 } else if (returnTypeName.equals("Mono")) {
                     return ((Mono) proceed).doOnSuccess(obj -> {
                         //执行方法后清除缓存
-                        if (map.size() > 0) {
-                            map.forEach((key, val) -> deleteRedisCache(key, val));
+                        if (listKeys.size() > 0) {
+                            for (Pair<String, String[]> pair : listKeys) {
+                                deleteRedisCache(pair.getLeft(), pair.getRight());
+                            }
+                        } else {
+                            if (map.size() > 0) {
+                                map.forEach((key, val) -> deleteRedisCache(key, val));
+                            }
                         }
                     });
                 } else {
@@ -483,18 +530,42 @@ public class ReactiveRedisCacheAspect {
     }
 
     private void deleteRedisCache(String cacheName, String key, boolean clearAll) {
-
-        String redis_key;
+        String redisKey;
         if (clearAll) {
-            redis_key = cacheName;
+            redisKey = cacheName;
         } else {
-            redis_key = redisKey(cacheName, key);
+            redisKey = redisKey(cacheName, key);
         }
-
-        deleteRedisCache(redis_key, clearAll);
+        deleteRedisCache(redisKey, clearAll);
     }
 
+    private void deleteRedisCache(String cacheName, String[] keys) {
+        try {
+            for (String k : keys) {
+                String redisKey = redisKey(cacheName, k);
+                final Set<String> ks = redisTemplate.keys(redisKey);
+                for (String keyName : ks) {
+                    redisTemplate.delete(keyName);
+                }
+            }
+        } catch (Exception e) {
+            log.error("批量清除缓存失败！", e);
+        }
+    }
+
+    private void getKeys(String[] keys, ProceedingJoinPoint proceedingJoinPoint) {
+        for (int i = 0; i < keys.length; i++) {
+            keys[i] = (String) AspectSupportUtils.getKeyValue(proceedingJoinPoint, keys[i]);
+        }
+    }
+
+    /**
+     * 拼接缓存key
+     */
     private String redisKey(String cacheName, String key) {
+        if (!StringUtils.hasText(cacheName)) {
+            return key;
+        }
         return cacheName + ":" + key;
     }
 

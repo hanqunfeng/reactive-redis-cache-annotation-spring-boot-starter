@@ -10,8 +10,32 @@
 
 
 ## 更新日志
+### 版本号：2.0.9 发布时间：2024-12-11
+* `ReactiveRedisCacheEvict` 注解中增加如下属性
+  - `String[] keys() default {}; ` 支持一次删除多个缓存，支持模糊匹配，与 key 和 allEntries 互斥，优先级更高，即如果设置了 keys，则不会使用 key 和 allEntries
+  ```java
+    @ReactiveRedisCacheEvict(cacheName = "sys-user", keys={
+            "'find_*'",
+            "'all'"
+    })
+    public Mono<Boolean> deleteAll() {
+        sysUserMap.clear();
+        return Mono.just(true);
+    }
+
+    @ReactiveRedisCaching(
+            evict = {@ReactiveRedisCacheEvict(cacheName = "sys-user", keys={
+                    "'find_*'",
+                    "'all'"
+            })}
+    )
+    public Mono<Boolean> deleteAll2() {
+        sysUserMap.clear();
+        return Mono.just(true);
+    }
+  ```
 ### 版本号：2.0.8 发布时间：2024-12-10
-* `ReactiveRedisCacheable` 注解与 `ReactiveRedisCachePut` 中新增或修改了如下参数的支持
+* `ReactiveRedisCacheable` 注解与 `ReactiveRedisCachePut`注解 中新增或修改了如下参数的支持
   - timeout: 缓存过期时间，单位秒，默认24小时，0或负数表示不过期，主要是为了解决`缓存雪崩`的问题
   - cacheNull: 是否缓存空值，默认 true，此时可以缓存Mono中为null和Flux中为empty的值，主要是为了解决`缓存穿透`的问题
   - cacheNullTimeout: 缓存空值的过期时间，单位秒，默认600秒，0或负数时使用 timeout 的设置时间
