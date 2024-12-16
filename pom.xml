@@ -171,19 +171,39 @@
 
             <!-- 发布到私服时需要注释掉下面两个插件 -->
             <!--staging puglin,用于自动执行发布阶段(免手动)-->
+<!--            <plugin>-->
+<!--                <groupId>org.sonatype.plugins</groupId>-->
+<!--                <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--                &lt;!&ndash; <version>1.6.8</version> &ndash;&gt;-->
+<!--                <version>1.6.14</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    &lt;!&ndash; 注意这里的serverId现在要配置的用户名和密码是 User Token &ndash;&gt;-->
+<!--                    <serverId>ossrh</serverId>-->
+<!--                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>-->
+<!--                    <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <!-- <version>1.6.8</version> -->
-                <version>1.6.14</version>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.5.0</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <!-- 注意这里的serverId现在要配置的用户名和密码是 User Token -->
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <!-- 这里的publishingServerId是在settings.xml中配置的server认证信息 -->
+                    <publishingServerId>maven-central</publishingServerId>
+                    <!-- 这里的autoPublish是自动发布，而不是手动发布 -->
+                    <autoPublish>true</autoPublish>
+                    <!-- 这里的waitUntil配置为published是等待发布完成，因为发布完成的时间比较长，所以可以不加这个参数 -->
+                    <!-- <waitUntil>published</waitUntil> -->
+                    <!-- 也可以设置为 publishing ，这样可以很快返回 -->
+                    <waitUntil>publishing</waitUntil>
+                    <!-- 这里的deploymentName是发布到中央仓库的名称 -->
+                    <deploymentName>${project.groupId}:${project.artifactId}:${project.version}</deploymentName>
                 </configuration>
             </plugin>
+
             <!-- release plugin,用于发布到release仓库部署插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -207,14 +227,14 @@
 <!--            <url>http://nexus.cxzh.ltd:8081/repository/maven-snapshots/</url>-->
 <!--        </snapshotRepository>-->
 
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-                </snapshotRepository>
-                <repository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
+<!--                <snapshotRepository>-->
+<!--                    <id>ossrh</id>-->
+<!--                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>-->
+<!--                </snapshotRepository>-->
+<!--                <repository>-->
+<!--                    <id>ossrh</id>-->
+<!--                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>-->
+<!--                </repository>-->
     </distributionManagement>
 
 </project>
